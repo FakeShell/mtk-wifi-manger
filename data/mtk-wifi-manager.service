@@ -1,0 +1,16 @@
+[Unit]
+Description=MediaTek WiFi Manager
+After=dbus.service
+Wants=dbus.service
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/mtk-wifi-manager
+BusName=com.MediaTek.WiFiManager
+Restart=on-failure
+RestartSec=5
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target

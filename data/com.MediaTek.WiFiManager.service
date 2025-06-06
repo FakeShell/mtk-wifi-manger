@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=com.MediaTek.WiFiManager
+Exec=/usr/libexec/mtk-wifi-manager
+User=root
+SystemdService=mtk-wifi-manager.service
