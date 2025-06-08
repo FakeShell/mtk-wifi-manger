@@ -1,0 +1,15 @@
+Source: mtk-wifi-manager
+Maintainer: Bardia Moshiri <bardia@furilabs.com>
+Section: misc
+Priority: optional
+Build-Depends: debhelper-compat (= 13),
+               libgio-2.0-dev,
+               libandroid-properties-dev,
+Standards-Version: 4.7.2
+Vcs-Browser: https://github.com/furilabs/mtk-wifi-manager
+Vcs-Git: https://github.com/furilabs/mtk-wifi-manager.git
+
+Package: mtk-wifi-manager
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends},
+Description: WiFi manager for MediaTek WMT driver
