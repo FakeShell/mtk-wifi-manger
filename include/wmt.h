@@ -14,7 +14,9 @@ typedef enum {
     WIFI_STATE_AP = 1,
     WIFI_STATE_P2P = 2,
     WIFI_STATE_DUAL_AP = 3,
-    WIFI_STATE_DUAL_P2P = 4
+    WIFI_STATE_DUAL_P2P = 4,
+    WIFI_STATE_ON = 5,
+    WIFI_STATE_OFF = 6
 } WiFiState;
 
 #define MAX_WAIT_SECOND              0xefffffff

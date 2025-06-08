@@ -89,6 +89,14 @@ wmt_set_state(WiFiState state)
             command_data = 'D';
             g_debug("Setting Dual P2P mode (writing 'D')");
             break;
+        case WIFI_STATE_ON:
+            command_data = '1';
+            g_debug("Setting WiFi ON (writing '1')");
+            break;
+        case WIFI_STATE_OFF:
+            command_data = '0';
+            g_debug("Setting WiFi OFF (writing '0')");
+            break;
         default:
             g_debug("Invalid WiFi state: %d", state);
             return -1;
@@ -103,10 +111,13 @@ wmt_set_state(WiFiState state)
 
     g_debug("Successfully set WiFi state to %d", state);
 
-    if (restart_systemd_service("NetworkManager.service") != 0)
-        g_debug("Warning: Failed to restart NetworkManager service");
-    else
-        g_debug("NetworkManager restart initiated successfully");
+    /* Only restart NetworkManager for mode changes, not ON/OFF states */
+    if (state != WIFI_STATE_OFF && state != WIFI_STATE_ON) {
+        if (restart_systemd_service("NetworkManager.service") != 0)
+            g_debug("Failed to restart NetworkManager service");
+        else
+            g_debug("NetworkManager restart initiated successfully");
+    }
 
     return 0;
 }
@@ -258,6 +269,10 @@ write_nvram(char *filename)
         g_debug("Successfully wrote NVRAM to driver");
         g_debug("Setting vendor.mtk.nvram.ready property");
         property_set("vendor.mtk.nvram.ready", "1");
+
+        /* Turn WiFi ON after NVRAM is ready */
+        g_debug("Turning WiFi ON after NVRAM initialization");
+        wmt_set_state(WIFI_STATE_ON);
     }
 
     free(acnvram);

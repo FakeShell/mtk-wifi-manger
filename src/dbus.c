@@ -48,12 +48,14 @@ handle_method_call(GDBusConnection *connection,
         if (new_state_value != WIFI_STATE_AP &&
             new_state_value != WIFI_STATE_P2P &&
             new_state_value != WIFI_STATE_DUAL_AP &&
-            new_state_value != WIFI_STATE_DUAL_P2P) {
+            new_state_value != WIFI_STATE_DUAL_P2P &&
+            new_state_value != WIFI_STATE_ON &&
+            new_state_value != WIFI_STATE_OFF) {
             g_debug("Invalid state value: %u", new_state_value);
             g_dbus_method_invocation_return_error(invocation,
                                                   G_DBUS_ERROR,
                                                   G_DBUS_ERROR_INVALID_ARGS,
-                                                  "Invalid state value. Must be 1 (AP), 2 (P2P), 3 (DUAL_AP), or 4 (DUAL_P2P)");
+                                                  "Invalid state value. Must be 1 (AP), 2 (P2P), 3 (DUAL_AP), 4 (DUAL_P2P), 5 (ON), or 6 (OFF)");
             return;
         }
 
@@ -167,7 +169,7 @@ dbus_service_init(DBusService *service, GError **error)
     g_debug("Initializing D-Bus service");
 
     /* Initialize service structure */
-    service->current_state = WIFI_STATE_AP; /* Default to AP mode */
+    service->current_state = WIFI_STATE_ON; /* Default to ON mode */
     service->connection = NULL;
     service->registration_id = 0;
 
