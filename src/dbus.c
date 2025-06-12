@@ -5,6 +5,7 @@
 
 #include "dbus.h"
 #include "wmt.h"
+#include "wpa.h"
 
 DBusService *g_dbus_service = NULL;
 
@@ -13,6 +14,9 @@ static const gchar introspection_xml[] =
     "  <interface name='com.MediaTek.WiFiManager'>"
     "    <method name='SetState'>"
     "      <arg type='u' name='state' direction='in'/>"
+    "    </method>"
+    "    <method name='WpaRefreshP2P'>"
+    "      <arg type='b' name='success' direction='out'/>"
     "    </method>"
     "    <signal name='StateChanged'>"
     "      <arg type='u' name='state'/>"
@@ -85,6 +89,14 @@ handle_method_call(GDBusConnection *connection,
                                                   G_DBUS_ERROR_FAILED,
                                                   "Failed to apply state change to WiFi hardware");
         }
+    } else if (g_strcmp0(method_name, "WpaRefreshP2P") == 0) {
+        g_debug("WpaRefreshP2P called");
+
+        gboolean success = wpa_refresh_p2p();
+
+        g_debug("WpaRefreshP2P completed with success: %s", success ? "true" : "false");
+
+        g_dbus_method_invocation_return_value(invocation, g_variant_new("(b)", success));
     } else {
         g_debug("Unknown method: %s", method_name);
         g_dbus_method_invocation_return_error(invocation,
