@@ -273,6 +273,7 @@ write_nvram(char *filename)
         /* Turn WiFi ON after NVRAM is ready */
         g_debug("Turning WiFi ON after NVRAM initialization");
         wmt_set_state(WIFI_STATE_ON);
+        wmt_set_state(WIFI_STATE_AP);
     }
 
     free(acnvram);
