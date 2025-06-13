@@ -221,13 +221,6 @@ wpa_flush_p2p(void)
 }
 
 gboolean
-wpa_p2p_find(void)
-{
-    g_debug("Starting P2P device discovery");
-    return execute_wpa_cli_command("p2p_find");
-}
-
-gboolean
 wpa_refresh_p2p(void)
 {
     gboolean success = TRUE;
@@ -241,11 +234,6 @@ wpa_refresh_p2p(void)
 
     if (!wpa_flush_p2p()) {
         g_debug("Failed to flush P2P peer table");
-        success = FALSE;
-    }
-
-    if (!wpa_p2p_find()) {
-        g_debug("Failed to start P2P discovery");
         success = FALSE;
     }
 

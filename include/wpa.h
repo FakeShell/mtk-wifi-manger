@@ -27,15 +27,6 @@ gboolean
 wpa_flush_p2p(void);
 
 /**
- * Start P2P device discovery.
- * Runs: wpa_cli -i wlan0 p2p_find
- *
- * @return TRUE on success, FALSE on failure.
- */
-gboolean
-wpa_p2p_find(void);
-
-/**
  * Refresh P2P by removing all groups, flushing, and starting discovery.
  * Sequentially calls: wpa_remove_all_p2p_groups -> wpa_flush_p2p -> wpa_p2p_find
  *
