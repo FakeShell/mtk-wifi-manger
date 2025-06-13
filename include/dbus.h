@@ -18,6 +18,8 @@ typedef struct {
     WiFiState current_state;
 } DBusService;
 
+extern DBusService *g_dbus_service;
+
 /**
  * Initialize the D-Bus service and register it on the system bus.
  *

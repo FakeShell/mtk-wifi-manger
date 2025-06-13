@@ -71,15 +71,13 @@ handle_method_call(GDBusConnection *connection,
             return;
         }
 
+        WiFiState old_state = service->current_state;
+
         /* Apply the state change via WMT */
         if (wmt_set_state(new_state) == 0) {
-            WiFiState old_state = service->current_state;
             service->current_state = new_state;
 
             g_debug("State changed from %d to %d", old_state, new_state);
-
-            /* Emit signal about state change */
-            dbus_emit_state_changed(service, service->current_state);
 
             g_dbus_method_invocation_return_value(invocation, NULL);
         } else {
@@ -149,6 +147,9 @@ dbus_emit_state_changed(DBusService *service, WiFiState new_state)
     GError *error = NULL;
 
     g_debug("Emitting StateChanged signal with state: %d", new_state);
+
+    /* Set current_state again in case we are called from somewhere other than handle_method_call */
+    service->current_state = new_state;
 
     gboolean result = g_dbus_connection_emit_signal(service->connection,
                                                     NULL,

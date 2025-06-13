@@ -5,6 +5,7 @@
  */
 
 #include "wmt.h"
+#include "dbus.h"
 #include <sys/stat.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -108,6 +109,9 @@ wmt_set_state(WiFiState state)
         g_debug("Failed to set WiFi state %d", state);
         return -1;
     }
+
+    /* Emit signal about state change */
+    dbus_emit_state_changed(g_dbus_service, state);
 
     g_debug("Successfully set WiFi state to %d", state);
 
