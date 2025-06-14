@@ -1,9 +1,9 @@
 CC = gcc
 
-CFLAGS = `pkg-config --cflags gio-2.0 libandroid-properties` -Iinclude
-LDFLAGS = `pkg-config --libs gio-2.0 libandroid-properties`
+CFLAGS = `pkg-config --cflags gio-2.0 libnl-3.0 libandroid-properties` -Iinclude
+LDFLAGS = `pkg-config --libs gio-2.0 libnl-genl-3.0 libandroid-properties`
 
-SOURCES = src/main.c src/dbus.c src/wmt.c src/wpa.c
+SOURCES = src/main.c src/dbus.c src/wmt.c src/wpa.c src/ip.c
 TARGET = mtk-wifi-manager
 
 PREFIX ?= /usr

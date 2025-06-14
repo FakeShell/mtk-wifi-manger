@@ -4,9 +4,8 @@
  */
 
 #include "wpa.h"
+#include "ip.h"
 #include <stdio.h>
-#include <linux/if.h>
-#include <sys/ioctl.h>
 
 /**
  * Execute a wpa_cli command and return success status.
@@ -49,119 +48,6 @@ execute_wpa_cli_command(const gchar *command)
     g_free(output);
     g_free(error_output);
 
-    return success;
-}
-
-/**
- * Get list of network interfaces matching a pattern.
- *
- * @param pattern  Pattern to match (e.g., "p2p-wlan0-")
- * @return         NULL-terminated array of interface names, or NULL on failure.
- *                 Caller must free the result with g_strfreev().
- */
-static gchar **
-get_matching_interfaces(const gchar *pattern)
-{
-    FILE *fp;
-    gchar *line = NULL;
-    size_t len = 0;
-    ssize_t read;
-    GPtrArray *interfaces;
-    gchar **result;
-
-    g_debug("Looking for interfaces matching pattern: %s", pattern);
-
-    fp = fopen("/proc/net/dev", "r");
-    if (!fp) {
-        g_debug("Failed to open /proc/net/dev");
-        return NULL;
-    }
-
-    interfaces = g_ptr_array_new();
-
-    /* Skip first two header lines */
-    getline(&line, &len, fp);
-    getline(&line, &len, fp);
-
-    while ((read = getline(&line, &len, fp)) != -1) {
-        gchar *iface_name;
-        gchar *colon_pos;
-
-        /* Remove leading whitespace */
-        gchar *trimmed = g_strstrip(g_strdup(line));
-
-        /* Find the colon that separates interface name from stats */
-        colon_pos = strchr(trimmed, ':');
-        if (!colon_pos) {
-            g_free(trimmed);
-            continue;
-        }
-
-        *colon_pos = '\0';
-        iface_name = g_strstrip(trimmed);
-
-        if (g_str_has_prefix(iface_name, pattern)) {
-            g_debug("Found matching interface: %s", iface_name);
-            g_ptr_array_add(interfaces, g_strdup(iface_name));
-        }
-
-        g_free(trimmed);
-    }
-
-    free(line);
-    fclose(fp);
-
-    g_ptr_array_add(interfaces, NULL);
-    result = (gchar **)g_ptr_array_free(interfaces, FALSE);
-
-    return result;
-}
-
-/**
- * Delete a network interface using netlink sockets.
- *
- * @param interface_name  Name of the interface to delete.
- * @return                TRUE on success, FALSE on failure.
- */
-static gboolean
-delete_interface(const gchar *interface_name)
-{
-    int sock;
-    struct ifreq ifr;
-    gboolean success = FALSE;
-
-    g_debug("Attempting to delete interface: %s", interface_name);
-
-    sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock < 0) {
-        g_debug("Failed to create socket for interface deletion");
-        return FALSE;
-    }
-
-    memset(&ifr, 0, sizeof(ifr));
-    strncpy(ifr.ifr_name, interface_name, IFNAMSIZ - 1);
-
-    if (ioctl(sock, SIOCGIFINDEX, &ifr) != 0) {
-        g_debug("Interface %s does not exist or already deleted", interface_name);
-        close(sock);
-        return TRUE; /* Consider it success if interface doesn't exist */
-    }
-
-    /* Try to bring interface down first */
-    if (ioctl(sock, SIOCGIFFLAGS, &ifr) == 0) {
-        ifr.ifr_flags &= ~IFF_UP;
-        if (ioctl(sock, SIOCSIFFLAGS, &ifr) == 0)
-            g_debug("Interface %s brought down", interface_name);
-    }
-
-    /* Virtual P2P interfaces are typically managed by wpa_supplicant
-     * and should be removed via wpa_cli. The ioctl SIOCDIFADDR can remove
-     * addresses but not the interface itself for virtual interfaces.
-     * We rely on wpa_cli p2p_group_remove for actual interface deletion. */
-    g_debug("Interface %s prepared for removal", interface_name);
-    success = TRUE;
-
-    close(sock);
     return success;
 }
 

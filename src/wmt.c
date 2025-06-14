@@ -6,11 +6,11 @@
 
 #include "wmt.h"
 #include "dbus.h"
+#include "ip.h"
 #include <sys/stat.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <hybris/properties/properties.h>
-#include <gio/gio.h>
 
 /* Global shutdown flag */
 volatile gint wmt_shutdown_flag = 0;
@@ -77,26 +77,32 @@ wmt_set_state(WiFiState state)
         case WIFI_STATE_AP:
             command_data = 'A';
             g_debug("Setting AP mode (writing 'A')");
+            enable_wowlan_magic_packet(TRUE);
             break;
         case WIFI_STATE_P2P:
             command_data = 'P';
             g_debug("Setting P2P mode (writing 'P')");
+            enable_wowlan_magic_packet(FALSE);
             break;
         case WIFI_STATE_DUAL_AP:
             command_data = 'E';
             g_debug("Setting Dual AP mode (writing 'E')");
+            enable_wowlan_magic_packet(TRUE);
             break;
         case WIFI_STATE_DUAL_P2P:
             command_data = 'D';
             g_debug("Setting Dual P2P mode (writing 'D')");
+            enable_wowlan_magic_packet(FALSE);
             break;
         case WIFI_STATE_ON:
             command_data = '1';
             g_debug("Setting WiFi ON (writing '1')");
+            enable_wowlan_magic_packet(TRUE);
             break;
         case WIFI_STATE_OFF:
             command_data = '0';
             g_debug("Setting WiFi OFF (writing '0')");
+            enable_wowlan_magic_packet(FALSE);
             break;
         default:
             g_debug("Invalid WiFi state: %d", state);
@@ -104,7 +110,6 @@ wmt_set_state(WiFiState state)
     }
 
     ret = write_data_to_driver(&command_data, 1);
-
     if (ret < 0) {
         g_debug("Failed to set WiFi state %d", state);
         return -1;
