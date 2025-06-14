@@ -5,6 +5,7 @@ Priority: optional
 Build-Depends: debhelper-compat (= 13),
                libgio-2.0-dev,
                libandroid-properties-dev,
+               libnl-3-dev,
 Standards-Version: 4.7.2
 Vcs-Browser: https://github.com/furilabs/mtk-wifi-manager
 Vcs-Git: https://github.com/furilabs/mtk-wifi-manager.git
