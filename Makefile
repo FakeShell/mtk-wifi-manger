@@ -16,7 +16,7 @@ $(TARGET): $(SOURCES)
 clean:
 	rm -f $(TARGET)
 
-install:
+install: $(TARGET)
 	install -d $(DESTDIR)$(PREFIX)/libexec
 	install -m 0755 $(TARGET) $(DESTDIR)$(PREFIX)/libexec/$(TARGET)
 	install -d $(DESTDIR)$(PREFIX)/lib/systemd/system
