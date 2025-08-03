@@ -19,12 +19,16 @@ volatile gint wmt_shutdown_flag = 0;
 static GMainContext *monitor_context = NULL;
 static GMainLoop *monitor_loop = NULL;
 
+typedef struct {
+    gchar *nvram_filename;
+} InotifyUserData;
+
 static int
 restart_systemd_service(const char *service_name)
 {
-    GDBusConnection *connection = NULL;
-    GVariant *result = NULL;
-    GError *error = NULL;
+    g_autoptr(GDBusConnection) connection = NULL;
+    g_autoptr(GVariant) result = NULL;
+    g_autoptr(GError) error = NULL;
     int ret = -1;
 
     g_debug("Attempting to restart systemd service: %s", service_name);
@@ -33,7 +37,6 @@ restart_systemd_service(const char *service_name)
     connection = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &error);
     if (!connection) {
         g_debug("Failed to connect to system bus: %s", error->message);
-        g_error_free(error);
         return ret;
     }
 
@@ -51,17 +54,13 @@ restart_systemd_service(const char *service_name)
 
     if (!result) {
         g_debug("Failed to restart service %s: %s", service_name, error->message);
-        g_error_free(error);
     } else {
-        gchar *job_path;
+        g_autofree gchar *job_path = NULL;
         g_variant_get(result, "(o)", &job_path);
         g_debug("Successfully initiated restart of %s (job: %s)", service_name, job_path);
-        g_free(job_path);
-        g_variant_unref(result);
         ret = 0;
     }
 
-    g_object_unref(connection);
     return ret;
 }
 
@@ -321,10 +320,21 @@ get_custom_nvram_file_name(char *filename)
     g_debug("Custom NVRAM filename = %s", filename);
 }
 
+static void
+free_inotify_user_data(gpointer user_data)
+{
+    InotifyUserData *data = (InotifyUserData *)user_data;
+    if (data) {
+        g_free(data->nvram_filename);
+        g_free(data);
+    }
+}
+
 static gboolean
 on_inotify_event(GIOChannel *channel, GIOCondition condition, gpointer user_data)
 {
-    char *nvram_filename = (char *)user_data;
+    InotifyUserData *data = (InotifyUserData *)user_data;
+    char *nvram_filename = data->nvram_filename;
     char buf[BUF_SIZE];
     gssize bytes_read;
     gsize bytes_to_read;
@@ -398,6 +408,7 @@ wmt_start_monitor()
     GIOChannel *inotify_channel = NULL;
     guint inotify_source_id = 0;
     char nvram_filename[BUF_SIZE] = {0};
+    InotifyUserData *user_data = NULL;
 
     g_debug("Waiting for device %s to be accessible", WIFI_LOADER_DEV);
     while (access(WIFI_LOADER_DEV, R_OK | W_OK) < 0) {
@@ -466,11 +477,16 @@ wmt_start_monitor()
     g_io_channel_set_encoding(inotify_channel, NULL, NULL);
     g_io_channel_set_buffered(inotify_channel, FALSE);
 
+    user_data = g_new0(InotifyUserData, 1);
+    user_data->nvram_filename = g_strdup(nvram_filename);
+
     /* Add inotify source to the event loop */
-    inotify_source_id = g_io_add_watch(inotify_channel,
-                                       G_IO_IN | G_IO_HUP | G_IO_ERR,
-                                       on_inotify_event,
-                                       g_strdup(nvram_filename));
+    inotify_source_id = g_io_add_watch_full(inotify_channel,
+                                            G_PRIORITY_DEFAULT,
+                                            G_IO_IN | G_IO_HUP | G_IO_ERR,
+                                            on_inotify_event,
+                                            user_data,
+                                            free_inotify_user_data);
 
     /* Write initial NVRAM */
     write_nvram(nvram_filename);
